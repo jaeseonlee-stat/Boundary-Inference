@@ -1,10 +1,10 @@
-# Global quasi-likelihood ratio test with conditional calibration (Algorithm 2).
+# Global quasi-likelihood ratio test with conditional testing procedure (Algorithm 2).
 # Parameter order: psi_x, psi_y, psi_z, phi_xy, phi_yz, phi_xz.
-# Observed LR: 2 * n * (loss under phi = 0 - loss under phi >= 0).
-# Sample W and V are evaluated at the null-restricted estimate.
+# Observed LR: 2 * n * (loss under null - loss under alternative).
+# Sample W and V are evaluated at the null estimate.
 # No additional R packages are required.
 
-# 1. Generate one observation from a separate Gibbs chain.
+# 1. Generate one observation from a separate Gibbs sampler.
 draw_one_sample = function(burn_in, theta) {
   X = Y = Z = 1
   
@@ -17,7 +17,7 @@ draw_one_sample = function(burn_in, theta) {
   c(X = X, Y = Y, Z = Z)
 }
 
-# 2. Compute the mean negative log quasi-likelihood.
+# 2. Compute the mean of negative log quasi-likelihood.
 loss = function(theta, samples) {
   X = samples[, "X"]
   Y = samples[, "Y"]
@@ -61,7 +61,7 @@ WV = function(theta, samples) {
 
 gradient = function(theta, samples) WV(theta, samples)$gradient
 
-# 4. Estimate theta subject to phi >= 0; return only the estimate.
+# 4. Estimate theta subject to constraint phi >= 0; return only the estimate.
 fit_for_test = function(start, samples) {
   fit = optim(
     par = start,
@@ -73,7 +73,7 @@ fit_for_test = function(start, samples) {
     control = list(maxit = 1000, factr = 1e3, pgtol = 1e-9)
   )
   
-  # A convergence warning does not remove this dataset from the study.
+  # A convergence warning if required
   if (fit$convergence != 0) warning(fit$message)
   fit$par
 }
@@ -167,7 +167,7 @@ test_one_dataset_A2 = function(samples, M = 1000, alpha = 0.05, B=4:6, U=1:3,
                 reject = rep(FALSE, length(alpha)), C_hat = C_hat))
   }
   
-  # Evaluate sample W and V at the null-restricted estimate.
+  # Evaluate sample W and V at the null estimate.
   wv = WV(theta_null, samples)
   W_inv = solve(wv$W)
   Sigma_hat = W_inv %*% wv$V %*% W_inv
@@ -241,7 +241,7 @@ for (n_current in n_values) {
   }
 }
 
-# 9. Display Type I error and power side by side, grouped by alpha.
+# 9. Show Type I error and power side by side, grouped by candidate alpha.
 global_summary_A2 = do.call(rbind, lapply(results_A2, function(x) x$summary))
 rownames(global_summary_A2) = NULL
 
