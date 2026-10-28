@@ -1,6 +1,7 @@
 # Statistical inference for boundary constrained parameters
 
 Code to reproduce results from the paper "Statistical inference for boundary constrained parameters" by Lee, Bhattacharya, and Subba Rao (2026+).
+[arXiv](https://arxiv.org/abs/2610.33321)
 
 ## File description
 
