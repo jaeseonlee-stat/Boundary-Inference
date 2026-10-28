@@ -1,7 +1,7 @@
-# Global quasi-likelihood ratio test with marginal calibration (Algorithm 1).
+# Global quasi-likelihood ratio test (Algorithm 1).
 # Parameter order: theta = (psi_x, psi_y, psi_z, phi_xy, phi_yz, phi_xz).
-# Observed LR: 2 * n * (loss under phi = 0 - loss under phi >= 0).
-# Sample W and V are evaluated at the null-restricted estimate.
+# Observed LR: 2 * n * (loss under null - loss under alternative).
+# Sample W and V are evaluated at the null estimate.
 # No additional R packages are required.
 
 # 1. Generate one observation from a separate Gibbs sampler
@@ -17,7 +17,7 @@ draw_one_sample = function(burn_in, theta) {
   c(X = X, Y = Y, Z = Z)
 }
 
-# 2. Compute the mean negative log quasi-likelihood.
+# 2. Compute the mean of negative log quasi-likelihood.
 loss = function(theta, samples) {
   X = samples[, "X"]
   Y = samples[, "Y"]
@@ -74,7 +74,7 @@ fit_for_test = function(start, samples) {
     control = list(maxit = 1000, factr = 1e3, pgtol = 1e-9)
   )
   
-  # A convergence warning does not remove this dataset from the study.
+  # A convergence warning if required
   if (fit$convergence != 0) warning(fit$message)
   fit$par
 }
@@ -93,7 +93,7 @@ simulate_marginal_null = function(Sigma, W, n, M = 1000, B=c(4:6), U=c(1:3)) {
     C_set = c(C_set, lapply(C_set, function(C) c(C, j)))
   }
   
-  # Compute the matrices for each face once, before drawing samples.
+  # Compute the matrices for each C once, before drawing samples.
   W_UU_inv = solve(W[U, U])
   faces = lapply(C_set, function(C) {
     A = setdiff(B, C)
@@ -155,7 +155,7 @@ test_one_dataset = function(samples, M = 1000, alpha = 0.05,
   theta_null = c(unname(log(means)), 0, 0, 0)
   theta_hat = fit_for_test(start = theta_null, samples = samples)
   
-  # Evaluate sample W and V at the null-restricted estimate in every scenario.
+  # Evaluate sample W and V at the null estimate in every scenario.
   wv = WV(theta_null, samples)
   W_hat = wv$W
   W_inv = solve(W_hat)
@@ -231,7 +231,7 @@ for (n_current in n_values) {
   }
 }
 
-# 9. Display Type I error and power side by side, grouped by alpha.
+# 9. Show Type I error and power side by side, grouped by candidate alpha.
 global_summary = do.call(rbind, lapply(results, function(x) x$summary))
 rownames(global_summary) = NULL
 
