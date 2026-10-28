@@ -1,4 +1,4 @@
-# Global quasi-likelihood ratio test with conditional testing procedure (Algorithm 2).
+# Conditional quasi-likelihood ratio test (Algorithm 2).
 # Parameter order: psi_x, psi_y, psi_z, phi_xy, phi_yz, phi_xz.
 # Observed LR: 2 * n * (loss under null - loss under alternative).
 # Sample W and V are evaluated at the null estimate.
