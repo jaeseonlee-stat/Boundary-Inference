@@ -1,12 +1,13 @@
-# Conditional quasi-likelihood ratio test (Algorithm 2).
-# Parameter order: theta = (psi_x, psi_y, psi_z, phi_xy, phi_yz, phi_xz).
-# Observed LR: 2 * n * (loss under null - loss under alternative).
-# Sample W and V are evaluated at the null estimate.
-# No additional R packages are required.
+# Algorithm 2
+# Parameter: 
+# theta = (psi_x, psi_y, psi_z, phi_xy, phi_yz, phi_xz).
+# Observed LR: 
+# 2 * n * (loss under null - loss under alternative).
+# Estimated W and V are evaluated at the null estimate.
 
 # 1. Generate one observation from a separate Gibbs sampler.
 draw_one_sample = function(burn_in, theta) {
-  X = Y = Z = 1
+  X = 1; Y = 1; Z = 1
   
   for (b in seq_len(burn_in + 1)) {
     X = rpois(1, exp(theta[1] - theta[4] * Y - theta[6] * Z))
@@ -32,7 +33,7 @@ loss = function(theta, samples) {
          exp(eta_z) - Z * eta_z)
 }
 
-# 3. Compute the loss Hessian W, gradient outer product V, and gradient.
+# 3. Compute the Hessian W, gradient outer product V, and gradient.
 WV = function(theta, samples) {
   n = nrow(samples)
   X = samples[, "X"]
@@ -61,7 +62,7 @@ WV = function(theta, samples) {
 
 gradient = function(theta, samples) WV(theta, samples)$gradient
 
-# 4. Estimate theta subject to constraint phi >= 0; return only the estimate.
+# 4. Estimate theta constrained to phi >= 0; return the estimate.
 fit_for_test = function(start, samples) {
   fit = optim(
     par = start,
@@ -132,7 +133,7 @@ simulate_conditional_LR = function(Sigma, W, n, C, M = 1000,
   }
   
   if (m < M) {
-    stop("Fewer than M draws were accepted; increase max_draws and retry the same dataset.")
+    stop("Less than M draws were accepted; increase max_draws and retry the same dataset.")
   }
   if (any(!is.finite(LR)) || any(LR < 0)) stop("Invalid simulated conditional LR.")
   LR
@@ -155,7 +156,7 @@ test_one_dataset_A2 = function(samples, M = 1000, alpha = 0.05, B=4:6, U=1:3,
   }
   LR_obs = max(LR_obs, 0)
   
-  # Treat phi estimates at or below 1e-8 as numerical zeros for face selection.
+  # Regard phi estimates at or below 1e-8 as zeros for C selection.
   C_hat = B[theta_hat[B] > 1e-8]
   
   # An empty C has a degenerate conditional distribution and never rejects.
@@ -214,7 +215,7 @@ run_rejection_study_A2 = function(theta_true, n = 100, burn_in = 50, B = 4:6, U 
     }
   }
   
-  # All R datasets count, including those with an empty C (non-rejections).
+  # All R datasets count, including those with an empty C (non rejections).
   summary = data.frame(scenario = label, n = n, alpha = alpha, rate = colMeans(reject))
   list(summary = summary, LR_obs = LR_obs, critical_LR = critical_LR, C_hat = C_hat)
 }
