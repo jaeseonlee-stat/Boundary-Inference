@@ -1,12 +1,13 @@
-# Global quasi-likelihood ratio test (Algorithm 1).
-# Parameter order: theta = (psi_x, psi_y, psi_z, phi_xy, phi_yz, phi_xz).
-# Observed LR: 2 * n * (loss under null - loss under alternative).
-# Sample W and V are evaluated at the null estimate.
-# No additional R packages are required.
+# Algorithm 1
+# Parameter:
+# theta = (psi_x, psi_y, psi_z, phi_xy, phi_yz, phi_xz).
+# Observed LR: 
+# 2 * n * (loss under null - loss under alternative).
+# Estimated W and V are evaluated at the null estimate.
 
 # 1. Generate one observation from a separate Gibbs sampler
 draw_one_sample = function(burn_in, theta) {
-  X = Y = Z = 1
+  X = 1; Y = 1; Z = 1
   
   for (b in seq_len(burn_in + 1)) {
     X = rpois(1, exp(theta[1] - theta[4] * Y - theta[6] * Z))
@@ -32,7 +33,7 @@ loss = function(theta, samples) {
          exp(eta_z) - Z * eta_z)
 }
 
-# 3. Compute the loss Hessian W, gradient outer product V, and gradient.
+# 3. Compute the Hessian W, gradient outer product V, and gradient.
 WV = function(theta, samples) {
   n = nrow(samples)
   X = samples[, "X"]
@@ -61,7 +62,7 @@ WV = function(theta, samples) {
 
 gradient = function(theta, samples) WV(theta, samples)$gradient
 
-# 4. Estimate theta subject to phi >= 0; return only the estimate.
+# 4. Estimate theta constrained to phi >= 0; return the estimate.
 fit_for_test = function(start, samples) {
   
   fit = optim(
@@ -101,7 +102,7 @@ simulate_marginal_null = function(Sigma, W, n, M = 1000, B=c(4:6), U=c(1:3)) {
     
     K = matrix(0, length(F), length(A))
     if (length(A)) {
-      K = solve(W[F, F, drop = FALSE], W[F, A, drop = FALSE]) # K=W_{FF}^{-1} W_{FA}
+      K = solve(W[F, F, drop = FALSE], W[F, A, drop = FALSE]) # K = W_{FF}^{-1} W_{FA}
     }
     
     W_A_given_F = W[A, A, drop = FALSE] - W[A, F, drop = FALSE] %*% K
@@ -112,7 +113,7 @@ simulate_marginal_null = function(Sigma, W, n, M = 1000, B=c(4:6), U=c(1:3)) {
          W_A_given_F = W_A_given_F, W_C_given_U = W_C_given_U)
   })
   
-  # Each row is one draw from N(0, Sigma / n).
+  # Each row is one sample from N(0, Sigma / n).
   eig = eigen(Sigma, symmetric = TRUE)
   if (min(eig$values) < -1e-10 * max(abs(eig$values))) {
     stop("Sigma has a materially negative eigenvalue.")
@@ -138,7 +139,7 @@ simulate_marginal_null = function(Sigma, W, n, M = 1000, B=c(4:6), U=c(1:3)) {
     }
   }
   
-  if (anyNA(LR)) stop("A Gaussian draw could not be assigned to a face.")
+  if (anyNA(LR)) stop("A Gaussian draw could not be assigned.")
   LR
 }
 
